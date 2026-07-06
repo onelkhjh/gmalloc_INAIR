@@ -102,15 +102,16 @@ python scripts/build_path_ui.py examples/maps/indoor_lab.yaml --profile official
 - conflict cell: 15개
 - 노드별 할당 cell: `26, 28, 28, 27`
 - 시작점 복귀를 포함한 makespan 거리: 약 `35.032 m`
-- 테스트: 28개
+- 테스트: 32개
 
 실행시간은 시스템 상태에 따라 달라지므로 새 실험마다 다시 측정해야 한다.
 
 ### 논문·공식 코드와의 차이
 
-현재 clustering은 재현성을 위해 결정적인 full-batch Lloyd 방식과 노드 시작점 초기화를
-사용한다. 저자 공식 코드는 stochastic `MiniBatchKMeans`로 먼저 cluster를 만든 뒤
-cluster와 로봇 시작점을 연결한다. 또한 공식 코드는 cell 폭을 정수이자 짝수로 만들고
+현재 구현은 두 clustering profile을 제공한다. `deterministic_lloyd`는 재현성을 위해
+full-batch Lloyd 방식과 노드 시작점 초기화를 사용한다. `official_minibatch`는 저자
+공식 코드처럼 `MiniBatchKMeans`로 cluster를 만든 뒤 cluster와 로봇 시작점을 greedy
+방식으로 연결하며, 재현을 위해 seed를 기록한다. 또한 공식 코드는 cell 폭을 정수이자 짝수로 만들고
 perimeter 간격을 3 m로 고정하지만, 이 설정은 1 m 미만 cell을 사용하는 실내 실험에
 적합하지 않아 현재 구현에서는 부동소수점 cell 폭과 `W/8` 간격을 유지한다.
 
@@ -134,6 +135,8 @@ metres; geographic conversion is outside the current laboratory scope.
 - polygonal AOI and no-fly-zone loading;
 - camera footprint `W = 2h tan(F/2)` and square-cell discretization;
 - deterministic Lloyd clustering with `W/8` tolerance and at most 10 iterations;
+- an `official_minibatch` profile with seeded `MiniBatchKMeans` and greedy
+  cluster-to-node association;
 - conflict detection and the greedy `cell count + B × d0` auction;
 - KD-tree nearest-neighbor coverage routes returning to each node start;
 - JSON experiment metrics and CSV/PNG node-count scaling reports.
@@ -150,9 +153,9 @@ python scripts/run_scaling.py examples/maps/indoor_lab.yaml --output artifacts/i
 
 ### Reproduction boundary
 
-The implementation follows the paper pipeline but deliberately retains
-floating-point indoor cell widths and deterministic full-batch Lloyd clustering.
-The public author code uses integer/even cell widths, a fixed 3 m perimeter
-interval, and stochastic `MiniBatchKMeans`. See
+The implementation follows the paper pipeline and provides both deterministic
+Lloyd and seeded official-style MiniBatchKMeans profiles. It deliberately
+retains floating-point indoor cell widths and a `W/8` perimeter interval; the
+public author code uses integer/even widths and a fixed 3 m interval. See
 [`docs/official_parity_audit.md`](docs/official_parity_audit.md) for the detailed
 parity audit.
