@@ -43,6 +43,8 @@ class ExperimentReport:
     conflict_cell_count: int
     clustering_iterations: int
     clustering_converged: bool
+    clustering_profile: str
+    random_seed: int | None
     auction_bias: float
     node_metrics: tuple[NodeMetrics, ...]
     cell_count_range: int
@@ -69,6 +71,8 @@ def run_definition(
     *,
     map_path: str = "<in-memory>",
     auction_bias: float = 0.5,
+    clustering_profile: str = "deterministic_lloyd",
+    random_seed: int = 0,
 ) -> ExperimentReport:
     """Execute the complete pipeline for an already validated map."""
     total_start = perf_counter()
@@ -78,7 +82,7 @@ def run_definition(
     discretization_s = perf_counter() - start
 
     start = perf_counter()
-    clustered = cluster_map(mapped)
+    clustered = cluster_map(mapped, profile=clustering_profile, random_seed=random_seed)
     clustering_s = perf_counter() - start
 
     start = perf_counter()
@@ -107,6 +111,8 @@ def run_definition(
         conflict_cell_count=len(allocated.auction_decisions),
         clustering_iterations=clustered.iterations,
         clustering_converged=clustered.converged,
+        clustering_profile=clustered.profile,
+        random_seed=clustered.random_seed,
         auction_bias=auction_bias,
         node_metrics=node_metrics,
         cell_count_range=int(max(counts) - min(counts)) if counts else 0,
@@ -119,7 +125,13 @@ def run_definition(
     )
 
 
-def run_experiment(map_path: str | Path, *, auction_bias: float = 0.5) -> ExperimentReport:
+def run_experiment(
+    map_path: str | Path,
+    *,
+    auction_bias: float = 0.5,
+    clustering_profile: str = "deterministic_lloyd",
+    random_seed: int = 0,
+) -> ExperimentReport:
     """Load a map, execute the complete SCoPP pipeline, and collect metrics."""
     source_path = Path(map_path)
-    return run_definition(load_map(source_path), map_path=source_path.as_posix(), auction_bias=auction_bias)
+    return run_definition(load_map(source_path), map_path=source_path.as_posix(), auction_bias=auction_bias, clustering_profile=clustering_profile, random_seed=random_seed)

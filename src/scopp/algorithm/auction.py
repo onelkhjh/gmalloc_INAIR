@@ -80,7 +80,8 @@ def allocate_conflict_cells(
             owners[assignment.cell_id] = owner
 
     decisions: list[AuctionDecision] = []
-    starts = tuple(node.position for node in mapped.source.node_starts)
+    node_by_id = {node.id: node for node in mapped.source.node_starts}
+    starts = tuple(node_by_id[cluster.node_id].position for cluster in clustered.clusters)
     distance_biases: list[float] = []
     for cluster_index, start in enumerate(starts):
         initial_centers = tuple(cell_by_id[cell_id].center for cell_id in assigned[cluster_index])
@@ -108,8 +109,8 @@ def allocate_conflict_cells(
         decisions.append(AuctionDecision(assignment.cell_id, assignment.cluster_indices, tuple(bids), winner))
 
     node_results = tuple(
-        NodeAllocation(index, node.id, tuple(assigned[index]))
-        for index, node in enumerate(mapped.source.node_starts)
+        NodeAllocation(index, clustered.clusters[index].node_id, tuple(assigned[index]))
+        for index in range(len(clustered.clusters))
     )
     owner_by_cell = tuple((cell.id, owners[cell.id]) for cell in mapped.cells)
     return AllocationResult(node_results, owner_by_cell, tuple(decisions), bias, tuple(distance_biases))

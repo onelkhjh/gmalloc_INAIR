@@ -36,16 +36,13 @@
 - perimeter 표본 간격은 3 m가 아니라 `W/8`을 기본값으로 사용한다.
 - 논문 설명에 맞춰 자체 2차원 KD-tree로 nearest-neighbor를 계산한다.
 
-## 남은 주요 차이
+## 구현된 공식 clustering profile
 
-현재 구현은 노드 시작점을 초기 centroid로 하는 결정적 full-batch Lloyd clustering을
-사용한다. 공식 코드는 stochastic `MiniBatchKMeans`로 cluster를 만든 뒤 robot start를
-연결한다. 따라서 현재 구현은 논문 기반의 결정적 실내 구현이며 공식 코드와 완전히
-동일한 수치 결과를 보장하지 않는다.
+`official_minibatch` profile을 추가했다. 이 profile은 공식 코드의
+`MiniBatchKMeans`, 최대 10회, `W/8` tolerance와 greedy cluster-to-node 연결을
+사용한다. 재현 가능한 실험을 위해 random seed를 명시적으로 기록한다. 기존 방식은
+`deterministic_lloyd` 연구 profile로 유지한다.
 
-공식 코드와 직접 수치 비교를 수행하려면 다음 작업이 필요하다.
-
-1. scikit-learn 버전과 random seed를 고정한 `official_minibatch` profile 추가
-2. 공식 cluster-to-node greedy association 구현
-3. 현재 결정적 방식을 별도 연구 profile로 유지
-4. 동일 Cartesian fixture에서 cell label, conflict, 경매 승자 및 경로 비교
+다만 현재 scikit-learn 1.9에서 과거 공식 코드 당시의 라이브러리 내부 동작까지 완전히
+재현한다고 보장할 수는 없다. `batch_size=100`, `n_init=3`으로 과거 기본값을 명시했으며,
+직접 비교 시에는 profile, seed 및 라이브러리 버전을 함께 보고해야 한다.

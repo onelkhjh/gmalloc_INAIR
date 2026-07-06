@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import hypot
+from typing import Literal
+
+from sklearn.cluster import MiniBatchKMeans
 
 from scopp.map.models import DiscretizedMap, XY
 
@@ -35,6 +38,8 @@ class ClusteringResult:
     iterations: int
     converged: bool
     tolerance_m: float
+    profile: str = "deterministic_lloyd"
+    random_seed: int | None = None
 
     @property
     def conflict_cell_ids(self) -> tuple[str, ...]:
@@ -92,6 +97,8 @@ def cluster_map(
     *,
     tolerance_m: float | None = None,
     max_iterations: int = 10,
+    profile: Literal["deterministic_lloyd", "official_minibatch"] = "deterministic_lloyd",
+    random_seed: int = 0,
 ) -> ClusteringResult:
     """Cluster all cell perimeter samples and identify conflict cells.
 
@@ -101,13 +108,52 @@ def cluster_map(
     if not value.source.node_starts:
         raise ValueError("SCoPP clustering requires at least one node")
     points = tuple(point for cell in value.cells for point in cell.perimeter_samples)
-    initial = tuple(node.position for node in value.source.node_starts)
     tolerance = tolerance_m if tolerance_m is not None else value.cell_width_m / 8.0
-    centroids, labels, iterations, converged = lloyd_cluster(
-        points, initial, tolerance_m=tolerance, max_iterations=max_iterations
-    )
+    if profile == "deterministic_lloyd":
+        initial = tuple(node.position for node in value.source.node_starts)
+        centroids, labels, iterations, converged = lloyd_cluster(
+            points, initial, tolerance_m=tolerance, max_iterations=max_iterations
+        )
+        node_ids = tuple(node.id for node in value.source.node_starts)
+        recorded_seed: int | None = None
+    elif profile == "official_minibatch":
+        # Matches the public implementation's explicit parameters and its old
+        # sklearn defaults (batch_size=100, n_init=3), while fixing the seed so
+        # experiments can be reproduced.
+        estimator = MiniBatchKMeans(
+            n_clusters=len(value.source.node_starts),
+            max_iter=max_iterations,
+            tol=tolerance,
+            batch_size=100,
+            n_init=3,
+            random_state=random_seed,
+        )
+        predicted = estimator.fit_predict(points)
+        centroids = tuple((float(center[0]), float(center[1])) for center in estimator.cluster_centers_)
+        labels = tuple(int(label) for label in predicted)
+        iterations = int(estimator.n_iter_)
+        converged = iterations < max_iterations
+        remaining = list(enumerate(value.source.node_starts))
+        associated: list[str] = []
+        for cluster_index in range(len(centroids)):
+            members = tuple(point for point, label in zip(points, labels) if label == cluster_index)
+            if not members:
+                raise ValueError(f"official_minibatch produced empty cluster {cluster_index}")
+            chosen_offset = min(
+                range(len(remaining)),
+                key=lambda offset: (
+                    min((point[0] - remaining[offset][1].position[0]) ** 2 + (point[1] - remaining[offset][1].position[1]) ** 2 for point in members),
+                    remaining[offset][0],
+                ),
+            )
+            _, chosen_node = remaining.pop(chosen_offset)
+            associated.append(chosen_node.id)
+        node_ids = tuple(associated)
+        recorded_seed = random_seed
+    else:
+        raise ValueError(f"unknown clustering profile: {profile}")
     clusters = tuple(
-        Cluster(index, value.source.node_starts[index].id, centroid, tuple(i for i, label in enumerate(labels) if label == index))
+        Cluster(index, node_ids[index], centroid, tuple(i for i, label in enumerate(labels) if label == index))
         for index, centroid in enumerate(centroids)
     )
     assignments: list[CellClusterAssignment] = []
@@ -116,4 +162,4 @@ def cluster_map(
         count = len(cell.perimeter_samples)
         assignments.append(CellClusterAssignment(cell.id, tuple(sorted(set(labels[offset:offset + count])))))
         offset += count
-    return ClusteringResult(clusters, points, labels, tuple(assignments), iterations, converged, tolerance)
+    return ClusteringResult(clusters, points, labels, tuple(assignments), iterations, converged, tolerance, profile, recorded_seed)

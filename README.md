@@ -87,6 +87,14 @@ python scripts/build_path_ui.py examples/maps/indoor_lab.yaml --output artifacts
 생성된 `artifacts/path_ui.html`을 브라우저에서 열면 노드별 영역과 경로를 선택하고
 방문 순서를 재생할 수 있다.
 
+공식 `MiniBatchKMeans` profile 실행 및 비교:
+
+```powershell
+python scripts/run_experiment.py examples/maps/indoor_lab.yaml --profile official_minibatch --seed 0 --output artifacts/official_metrics.json
+python scripts/compare_profiles.py examples/maps/indoor_lab.yaml --seed 0 --output artifacts/profile_comparison.json
+python scripts/build_path_ui.py examples/maps/indoor_lab.yaml --profile official_minibatch --seed 0 --output artifacts/official_path_ui.html
+```
+
 ### 현재 실내 예제 결과
 
 - 유효 cell: 109개

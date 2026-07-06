@@ -49,19 +49,15 @@ adaptations in this repository.
 These adaptations must be reported in indoor experiment results and must not be
 presented as byte-for-byte official-code reproduction.
 
-## Remaining blocking difference
+## Implemented official clustering profile
 
-The current clustering implementation is deterministic full-batch Lloyd
-clustering initialized at node starts. Official code uses stochastic
-`MiniBatchKMeans` and associates clusters to robot starts afterward. Therefore
-the current partition is a paper-guided deterministic implementation, not exact
-official-code parity.
+The `official_minibatch` profile now uses `MiniBatchKMeans`, at most 10
+iterations, `W/8` tolerance, and the public code's greedy cluster-to-node
+association. A random seed is explicitly recorded for reproducibility. The
+original implementation remains available as the `deterministic_lloyd` research
+profile.
 
-Before publishing direct numeric comparisons with the official repository:
-
-1. add an `official_minibatch` profile using a pinned scikit-learn version and
-   recorded random seed;
-2. implement the official greedy cluster-to-node association;
-3. preserve the current deterministic profile as an explicit research variant;
-4. compare cell labels, conflicts, auction winners and final paths on a shared
-   Cartesian fixture.
+Exact historical parity with the scikit-learn version used by the public code
+is not guaranteed. The profile explicitly sets the older defaults
+`batch_size=100` and `n_init=3`; comparisons must report the profile, seed, and
+installed library version.

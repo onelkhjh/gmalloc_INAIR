@@ -68,7 +68,7 @@ svg.append(E('polygon',{points:pts(D.aoi),class:'aoi'}));const noFly=E('g',{id:'
 const cells=E('g',{id:'cells'});D.cells.forEach(c=>{const e=E('polygon',{points:pts(c.vertices),fill:C[c.owner%C.length],class:'cell',id:`cell-${c.id}`,'data-owner':c.owner});cells.append(e)});svg.append(cells);
 const routes=E('g',{id:'routes'});D.nodes.forEach(n=>{routes.append(E('polyline',{points:pts(n.trajectory),stroke:C[n.index%C.length],class:'route',id:`route-${n.index}`,'data-owner':n.index}))});svg.append(routes);
 const nodeLayer=E('g',{id:'nodeLayer'});D.nodes.forEach(n=>{nodeLayer.append(E('circle',{cx:n.start[0],cy:-n.start[1],r:D.cellWidth*.18,fill:C[n.index%C.length],class:'node','data-owner':n.index}));});svg.append(nodeLayer);const cursorLayer=E('g',{id:'cursorLayer'});D.nodes.forEach(n=>cursorLayer.append(E('circle',{id:`cursor-${n.index}`,r:D.cellWidth*.15,class:'cursor',fill:C[n.index%C.length]})));svg.append(cursorLayer);
-document.querySelector('#subtitle').textContent=`${D.name} · ${D.cells.length} cells · ${D.nodes.length} nodes`;
+document.querySelector('#subtitle').textContent=`${D.name} · ${D.cells.length} cells · ${D.nodes.length} nodes · ${D.profile}${D.randomSeed===null?'':` · seed ${D.randomSeed}`}`;
 const metricData=[['Cell',D.cells.length],['Conflict',D.conflicts],['Makespan',`${D.makespan.toFixed(2)} m`],['총 거리',`${D.totalDistance.toFixed(2)} m`]];document.querySelector('#metrics').innerHTML=metricData.map(x=>`<div class="metric"><b>${x[1]}</b><span>${x[0]}</span></div>`).join('');
 document.querySelector('#nodes').innerHTML=D.nodes.map(n=>`<div class="node-row" data-testid="node-${n.index}" data-index="${n.index}"><i class="dot" style="background:${C[n.index%C.length]}"></i><div><b>${n.id}</b><br><small>${n.cells} cells · ${n.distance.toFixed(2)} m</small><div class="movement" id="node-status-${n.index}">대기 · (${n.start[0].toFixed(2)}, ${n.start[1].toFixed(2)})</div><div class="progressbar"><i id="bar-${n.index}"></i></div></div><span>${n.waypoints.length}</span></div>`).join('');
 const maxSteps=Math.max(...D.nodes.map(n=>n.trajectory.length));
@@ -88,14 +88,18 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("map_file", type=Path)
     parser.add_argument("--output", type=Path, default=Path("artifacts/path_ui.html"))
+    parser.add_argument("--profile", choices=["deterministic_lloyd", "official_minibatch"], default="deterministic_lloyd")
+    parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
     mapped = discretize_map(load_map(args.map_file))
-    clustered = cluster_map(mapped)
+    clustered = cluster_map(mapped, profile=args.profile, random_seed=args.seed)
     allocation = allocate_conflict_cells(mapped, clustered)
     plan = plan_coverage_paths(mapped, allocation)
     owners = dict(allocation.owner_by_cell)
     data = {
         "name": mapped.source.name,
+        "profile": clustered.profile,
+        "randomSeed": clustered.random_seed,
         "cellWidth": mapped.cell_width_m,
         "aoi": mapped.source.aoi.exterior,
         "noFly": [zone.exterior for zone in mapped.source.no_fly_zones],

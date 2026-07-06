@@ -105,9 +105,12 @@ def plan_coverage_paths(mapped: DiscretizedMap, allocation: AllocationResult) ->
     cell_by_id = {cell.id: cell for cell in mapped.cells}
     stable_index = {cell.id: index for index, cell in enumerate(mapped.cells)}
     paths: list[NodePath] = []
-    for allocated, node in zip(allocation.nodes, mapped.source.node_starts):
-        if allocated.node_id != node.id:
-            raise ValueError("allocation node order does not match map node order")
+    node_by_id = {node.id: node for node in mapped.source.node_starts}
+    for allocated in allocation.nodes:
+        try:
+            node = node_by_id[allocated.node_id]
+        except KeyError as exc:
+            raise ValueError(f"allocation contains unknown node {allocated.node_id!r}") from exc
         items = tuple(_PointItem(cell_by_id[cell_id].center, stable_index[cell_id], cell_id) for cell_id in allocated.cell_ids)
         ordered = _ordered_nearest_neighbor(node.position, items)
         waypoints = tuple(item.point for item in ordered)
