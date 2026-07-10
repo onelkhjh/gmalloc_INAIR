@@ -1,5 +1,24 @@
 # Multi-robot Indoor Coverage Path Planning
 
+## Clustering baseline
+
+- `official_minibatch` is the default and the official SCoPP clustering
+  baseline. Official comparison and KPI artifacts must use this profile.
+- `deterministic_lloyd` is a non-default legacy/test profile retained for
+  historical reproduction and deterministic unit tests. It must not be used
+  for official comparison or KPI artifacts.
+- Comparisons must keep the map, clustering/allocation, and constraints fixed.
+  See [the official parity audit](docs/official_parity_audit.md) for details.
+
+## 클러스터링 기준선
+
+- `official_minibatch`를 기본값이자 공식 SCoPP 클러스터링 기준선으로 사용한다.
+  공식 비교 및 KPI 산출물은 반드시 이 프로파일을 사용한다.
+- `deterministic_lloyd`는 과거 결과 재현과 결정론적 단위 테스트를 위한 비기본
+  레거시/테스트 프로파일로만 유지한다. 공식 비교 및 KPI 산출물에는 사용하지 않는다.
+- 비교할 때는 맵, 클러스터링/할당, 제약 조건을 동일하게 고정한다. 자세한 내용은
+  [공식 코드 정합성 문서](docs/official_parity_audit.ko.md)를 참고한다.
+
 ## 한국어
 
 이 저장소는 Leighton Collins et al.의 논문 *Scalable Coverage Path Planning of Multi-Robot Teams for Monitoring Non-Convex Areas* (arXiv:2103.14709)과 저자 공식 코드를 기준선으로 두고, 같은 조건에서 더 나은 KPI를 만드는 방향으로 진행한다.
