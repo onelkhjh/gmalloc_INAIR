@@ -7,7 +7,7 @@
 - Clustering: `official_minibatch` — SCoPP 공식 기준선
 - Path planning: `approx_metric_tsp` — 현재 운영 및 KPI 개선 기본값
 - Baseline path: `paper_nn` — SCoPP/public-code 비교용 기준선
-- Legacy exact path: `legacy_exact_tsp` — 20개 이하 소규모 문제의 회귀 검증 및 optimality-gap 측정용
+- Legacy exact path: `legacy_exact_tsp` — 소규모 문제의 회귀 검증 및 optimality-gap 측정용
 
 `approx_metric_tsp`는 valid-cell 4-neighbor 그래프의 최단거리로 metric closure를 만들고, deterministic cheapest insertion과 2-opt로 방문 순서를 계산한다. 모든 로봇에 같은 근사해법을 적용하며 셀 개수에 따라 exact 해법으로 자동 전환하지 않는다.
 
@@ -55,7 +55,7 @@ python scripts/build_path_comparison_ui.py examples/maps/indoor_lab.yaml --outpu
 python scripts/compare_path_planners.py examples/maps/indoor_lab.yaml --seed 0 --bias 0.5 --output artifacts/path_planner_exec_only_v1.json --plot artifacts/path_planner_exec_only_v1.png
 ```
 
-기준선 재현이 필요하면 명시적으로 `--path-profile paper_nn`을 사용한다. Exact 검증은 `--path-profile legacy_exact_tsp`로 실행하며 로봇별 target이 20개를 넘으면 실패하는 것이 정상이다.
+기준선 재현이 필요하면 명시적으로 `--path-profile paper_nn`을 사용한다. 운영 기본값인 `approx_metric_tsp`에는 target 20개 제한이 없다. `legacy_exact_tsp`만 소규모 최적해 비교를 위한 검증용 프로필이며, 계산량이 지수적으로 증가하므로 로봇별 target을 최대 20개로 제한한다.
 
 ## English summary
 
