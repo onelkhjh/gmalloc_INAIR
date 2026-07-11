@@ -60,3 +60,14 @@ python scripts/compare_path_planners.py examples/maps/indoor_lab.yaml --seed 0 -
 ## English summary
 
 The SCoPP paper and official code remain the reproduction baseline. The active indoor route planner is now `approx_metric_tsp`, using metric closure over the valid-cell graph followed by deterministic cheapest insertion and 2-opt. `paper_nn` remains available only as the SCoPP/public-code path baseline, while `legacy_exact_tsp` is retained for small-instance regression and optimality-gap checks. Direct and executable distances are reported separately under fixed map, allocation, and constraints.
+
+## Attribution and third-party software
+
+This is an independently structured derivative implementation informed by the SCoPP paper and the authors' MIT-licensed official implementation. It is not a byte-for-byte copy or an official release of the SCoPP authors.
+
+- Upstream reference: [adamslab-ub/SCoPP](https://github.com/adamslab-ub/SCoPP)
+- Paper: Collins et al., *Scalable Coverage Path Planning of Multi-Robot Teams for Monitoring Non-Convex Areas*, ICRA 2021, arXiv:2103.14709
+- Retained reference behavior: clustering, conflict-cell auction, and `paper_nn`
+- Project extensions: indoor map policies, no-fly handling, executable 4-neighbor transit, `approx_metric_tsp`, KPI reporting, and experiment UIs
+
+See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for dependency and attribution details. No license is granted for this repository's original work merely by this notice; a repository-level license must be selected separately by its owner.
