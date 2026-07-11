@@ -62,7 +62,7 @@ class PathComparisonReport:
     cell_count: int
     conflict_cell_count: int
     assignment: tuple[tuple[str, int], ...]
-    current_metric_tsp: PlannerComparison
+    current_approx_metric_tsp: PlannerComparison
     public_code_nn: PlannerComparison
 
     def to_dict(self) -> dict[str, object]:
@@ -114,7 +114,7 @@ def compare_path_planners(
     ).run_definition(definition)
 
     start = perf_counter()
-    metric_plan = plan_coverage_paths(base.mapped, base.allocation, profile=PathPlanningProfile.METRIC_TSP)
+    metric_plan = plan_coverage_paths(base.mapped, base.allocation, profile=PathPlanningProfile.APPROX_METRIC_TSP)
     metric_runtime = perf_counter() - start
     start = perf_counter()
     nn_plan = plan_coverage_paths(base.mapped, base.allocation, profile=PathPlanningProfile.PAPER_NN)
@@ -129,7 +129,7 @@ def compare_path_planners(
         len(base.mapped.cells),
         len(base.allocation.auction_decisions),
         tuple((node.node_id, len(node.cell_ids)) for node in base.allocation.nodes),
-        _summarize("current_metric_tsp", metric_plan, metric_runtime),
+        _summarize("current_approx_metric_tsp", metric_plan, metric_runtime),
         _summarize("public_code_nn", nn_plan, nn_runtime),
     )
 

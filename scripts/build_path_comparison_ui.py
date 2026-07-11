@@ -35,7 +35,7 @@ def build_data(map_file: Path, *, seed: int, bias: float) -> dict[str, object]:
             auction_bias=bias,
         )
     ).run_map(map_file)
-    metric_plan = plan_coverage_paths(base.mapped, base.allocation, profile=PathPlanningProfile.METRIC_TSP)
+    metric_plan = plan_coverage_paths(base.mapped, base.allocation, profile=PathPlanningProfile.APPROX_METRIC_TSP)
     nn_plan = plan_coverage_paths(base.mapped, base.allocation, profile=PathPlanningProfile.PAPER_NN)
     metric_by_id = _path_map(metric_plan)
     nn_by_id = _path_map(nn_plan)

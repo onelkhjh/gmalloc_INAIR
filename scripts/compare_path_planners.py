@@ -1,4 +1,4 @@
-"""Compare current metric-TSP and public-code NN orders on executable KPI."""
+"""Compare approximate metric-TSP and public-code NN orders on executable KPI."""
 
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ def main() -> None:
     args = parser.parse_args()
 
     report = compare_path_planners(load_map(args.map_file), random_seed=args.seed, auction_bias=args.bias)
-    current, public = report.current_metric_tsp, report.public_code_nn
+    current, public = report.current_approx_metric_tsp, report.public_code_nn
 
     data = report.to_dict()
     data["improvement_percent"] = {
@@ -61,7 +61,7 @@ def main() -> None:
     fig, axes = plt.subplots(2, 2, figsize=(11, 8))
     colors = ("#2563eb", "#f97316")
 
-    axes[0, 0].bar([i - width / 2 for i in x], [n.executable_distance_m for n in current.nodes], width, label="Metric-TSP", color=colors[0])
+    axes[0, 0].bar([i - width / 2 for i in x], [n.executable_distance_m for n in current.nodes], width, label="Approx Metric-TSP", color=colors[0])
     axes[0, 0].bar([i + width / 2 for i in x], [n.executable_distance_m for n in public.nodes], width, label="public-code NN", color=colors[1])
     axes[0, 0].set(title="Executable distance by node", ylabel="distance (m)", xticks=list(x), xticklabels=labels)
     axes[0, 0].legend()

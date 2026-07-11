@@ -12,7 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from scopp import ClusteringProfile, ScoppConfig, ScoppPipeline
+from scopp import ClusteringProfile, PathPlanningProfile, ScoppConfig, ScoppPipeline
 from scopp.ui import render_progress_ui
 
 
@@ -63,13 +63,14 @@ def main() -> None:
         "tests": _test_count(),
         "pythonFiles": len(tuple(ROOT.glob("src/**/*.py"))) + len(tuple(ROOT.glob("scripts/*.py"))),
         "cellCount": len(ScoppPipeline().run_map(args.map).mapped.cells),
+        "pathProfile": PathPlanningProfile.APPROX_METRIC_TSP.value,
         "profiles": runs,
         "stages": [
             {"name": "맵 모델", "detail": "AOI, no-fly, Shapely", "status": "done"},
             {"name": "격자화", "detail": "FoV 기반 cell 생성", "status": "done"},
             {"name": "Clustering", "detail": "Lloyd / MiniBatch", "status": "done"},
             {"name": "경쟁 해소", "detail": "Conflict cell 탐지", "status": "done"},
-            {"name": "CPP", "detail": "Nearest neighbor", "status": "done"},
+            {"name": "경로계획", "detail": "Approx Metric-TSP · insertion + 2-opt", "status": "done"},
             {"name": "집계", "detail": "Makespan / 경로 길이", "status": "done"},
             {"name": "UI", "detail": "경로 비교 대시보드 생성", "status": "done"},
         ],
@@ -83,7 +84,7 @@ def main() -> None:
         "next": [
             {
                 "name": "경로 성능",
-                "detail": "동적 장애가 없는 KD-tree 기반 탐색과 grid-adjacent executable 비교를 더 확장할 수 있습니다.",
+                "detail": "Approx Metric-TSP의 optimality gap, 2-opt local optimum 및 표준 솔버 교차 검증을 확장할 수 있습니다.",
             },
             {
                 "name": "실내 비행",

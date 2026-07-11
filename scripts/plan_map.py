@@ -23,7 +23,7 @@ def main() -> None:
     parser.add_argument("map_file", type=Path)
     parser.add_argument("--output", type=Path, default=Path("plan.png"))
     parser.add_argument("--profile", choices=[item.value for item in ClusteringProfile], default=ClusteringProfile.OFFICIAL_MINIBATCH.value)
-    parser.add_argument("--path-profile", choices=[item.value for item in PathPlanningProfile], default=PathPlanningProfile.PAPER_NN.value)
+    parser.add_argument("--path-profile", choices=[item.value for item in PathPlanningProfile], default=PathPlanningProfile.APPROX_METRIC_TSP.value)
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
     config = ScoppConfig.from_cli(args.profile, args.seed, path_profile=args.path_profile)

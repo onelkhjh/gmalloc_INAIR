@@ -33,7 +33,7 @@ def test_nearest_neighbor_starts_at_nearest_cell() -> None:
         for index, node in enumerate(mapped.source.node_starts)
     )
     allocation = AllocationResult(nodes, tuple((cell_id, 0) for cell_id in ids), (), 0.5, (0.0, 0.0, 0.0, 0.0))
-    path = plan_coverage_paths(mapped, allocation).paths[0]
+    path = plan_coverage_paths(mapped, allocation, profile=PathPlanningProfile.PAPER_NN).paths[0]
     start = mapped.source.node_starts[0].position
     expected = min(mapped.cells[:3], key=lambda cell: ((cell.center[0] - start[0]) ** 2 + (cell.center[1] - start[1]) ** 2, mapped.cells.index(cell)))
     assert path.cell_ids[0] == expected.id
@@ -61,7 +61,7 @@ def test_motion_path_uses_only_four_neighbor_cells() -> None:
             assert abs(a.row - b.row) + abs(a.col - b.col) == 1
 
 
-def test_metric_tsp_uses_shortest_metric_closure_cycle() -> None:
+def test_approx_metric_tsp_is_deterministic() -> None:
     mapped = discretize_map(parse_map({
         "schema_version": "1.0",
         "name": "metric-tsp",
@@ -75,8 +75,20 @@ def test_metric_tsp_uses_shortest_metric_closure_cycle() -> None:
     allocation = AllocationResult((NodeAllocation(0, "n1", ids),), tuple((cell_id, 0) for cell_id in ids), (), 0.5, (0.0,))
 
     greedy = plan_coverage_paths(mapped, allocation, profile=PathPlanningProfile.PAPER_NN).paths[0]
-    optimal = plan_coverage_paths(mapped, allocation, profile=PathPlanningProfile.METRIC_TSP).paths[0]
+    approximate = plan_coverage_paths(mapped, allocation, profile=PathPlanningProfile.APPROX_METRIC_TSP).paths[0]
+    repeated = plan_coverage_paths(mapped, allocation, profile=PathPlanningProfile.APPROX_METRIC_TSP).paths[0]
+    legacy_exact = plan_coverage_paths(mapped, allocation, profile=PathPlanningProfile.LEGACY_EXACT_TSP).paths[0]
 
     assert greedy.distance_m == pytest.approx(12.0)
-    assert optimal.distance_m == pytest.approx(10.0)
-    assert set(optimal.cell_ids) == set(ids)
+    assert approximate == repeated
+    assert approximate.distance_m == pytest.approx(10.0)
+    assert approximate.distance_m >= legacy_exact.distance_m
+    assert set(approximate.cell_ids) == set(ids)
+
+
+def test_legacy_exact_tsp_retains_twenty_target_limit() -> None:
+    from scopp.algorithm.path_planning import MetricTspTooLargeError, _held_karp_cycle_order
+
+    distance = tuple(tuple(0.0 for _ in range(22)) for _ in range(22))
+    with pytest.raises(MetricTspTooLargeError, match="at most 20 targets"):
+        _held_karp_cycle_order(distance)

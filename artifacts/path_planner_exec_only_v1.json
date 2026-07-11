@@ -24,8 +24,8 @@
       29
     ]
   ],
-  "current_metric_tsp": {
-    "planner": "current_metric_tsp",
+  "current_approx_metric_tsp": {
+    "planner": "current_approx_metric_tsp",
     "nodes": [
       {
         "node_id": "node-04",
@@ -44,9 +44,9 @@
       {
         "node_id": "node-02",
         "cell_count": 19,
-        "direct_distance_m": 27.039854642989578,
-        "executable_distance_m": 28.429922915090113,
-        "transit_inflation": 1.0514081266505968
+        "direct_distance_m": 28.346750288222463,
+        "executable_distance_m": 30.277443776496913,
+        "transit_inflation": 1.0681098703958534
       },
       {
         "node_id": "node-01",
@@ -57,13 +57,13 @@
       }
     ],
     "direct_makespan_m": 41.17877104040642,
-    "direct_total_m": 135.16003193350224,
-    "direct_distance_cv": 0.16647006376983492,
-    "direct_max_mean_ratio": 1.2186671000689338,
+    "direct_total_m": 136.46692757873512,
+    "direct_distance_cv": 0.15384931155584383,
+    "direct_max_mean_ratio": 1.206996354971007,
     "executable_makespan_m": 43.26578775127645,
-    "executable_total_m": 145.3360254645055,
-    "executable_distance_cv": 0.1558210691335363,
-    "planning_runtime_s": 15.70734779999475
+    "executable_total_m": 147.1835463259123,
+    "executable_distance_cv": 0.13694669417982036,
+    "planning_runtime_s": 0.03797930001746863
   },
   "public_code_nn": {
     "planner": "public_code_nn",
@@ -104,11 +104,11 @@
     "executable_makespan_m": 50.655871196903654,
     "executable_total_m": 167.50627580138712,
     "executable_distance_cv": 0.17760616214047026,
-    "planning_runtime_s": 0.0027162999904248863
+    "planning_runtime_s": 0.0036426000006031245
   },
   "improvement_percent": {
     "executable_makespan": 14.5887994244563,
-    "executable_total": 13.235474450622362
+    "executable_total": 12.132518246403839
   },
   "interpretation": {
     "executable": "Both visit orders expanded through the local valid-cell 4-neighbour grid-adjacent model.",

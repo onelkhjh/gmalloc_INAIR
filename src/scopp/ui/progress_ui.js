@@ -1,5 +1,5 @@
 document.querySelector('#commit').textContent=`main · ${D.commit}`;
-const stats=[['테스트',`${D.tests} passed`],['Python 파일',D.pythonFiles],['유효 Cell',D.cellCount],['구현 Profile',D.profiles.length]];
+const stats=[['테스트',`${D.tests} passed`],['기본 경로계획',D.pathProfile],['유효 Cell',D.cellCount],['Clustering Profile',D.profiles.length]];
 document.querySelector('#stats').innerHTML=stats.map(x=>`<article class="stat"><b>${x[1]}</b><small>${x[0]}</small></article>`).join('');
 const done=D.stages.filter(x=>x.status==='done').length;document.querySelector('#completion').textContent=`${done}/${D.stages.length} 완료`;
 document.querySelector('#pipeline').innerHTML=D.stages.map((x,i)=>`<article class="stage ${x.status}"><span class="num">0${i+1}</span>${x.status==='done'?'<span class="check">●</span>':''}<b>${x.name}</b><small>${x.detail}</small></article>`).join('');

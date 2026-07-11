@@ -9,7 +9,7 @@ from .models import DiscretizedMap
 
 
 def render_plan(value, allocation, plan):
-    """Render node ownership and nearest-neighbor coverage paths."""
+    """Render node ownership and the selected coverage paths."""
     fig, ax = plt.subplots()
     source = value.source
     colors = plt.get_cmap("tab10")

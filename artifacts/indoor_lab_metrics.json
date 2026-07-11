@@ -10,19 +10,19 @@
   "clustering_iterations": 1,
   "clustering_converged": true,
   "clustering_profile": "official_minibatch",
-  "path_planning_profile": "paper_nn",
+  "path_planning_profile": "approx_metric_tsp",
   "random_seed": 0,
   "auction_bias": 0.5,
   "node_metrics": [
     {
       "node_id": "node-04",
       "cell_count": 23,
-      "distance_m": 44.971154706724306
+      "distance_m": 33.886029538283495
     },
     {
       "node_id": "node-03",
       "cell_count": 38,
-      "distance_m": 50.655871196903654
+      "distance_m": 43.26578775127645
     },
     {
       "node_id": "node-02",
@@ -32,20 +32,20 @@
     {
       "node_id": "node-01",
       "cell_count": 29,
-      "distance_m": 41.60180612126224
+      "distance_m": 39.75428525985544
     }
   ],
   "cell_count_range": 19,
   "cell_count_cv": 0.2625520737844805,
-  "distance_range_m": 20.37842742040674,
-  "distance_cv": 0.17760616214047026,
-  "makespan_distance_m": 50.655871196903654,
-  "total_distance_m": 167.50627580138712,
+  "distance_range_m": 12.988343974779536,
+  "distance_cv": 0.13694669417982036,
+  "makespan_distance_m": 43.26578775127645,
+  "total_distance_m": 147.1835463259123,
   "timings": {
-    "discretization_s": 0.02560059999814257,
-    "clustering_s": 0.5827049000072293,
-    "auction_s": 0.00014009998994879425,
-    "path_planning_s": 0.0037659000081475824,
-    "total_s": 0.6122128999850247
+    "discretization_s": 0.014705399982631207,
+    "clustering_s": 0.40853730001254007,
+    "auction_s": 0.00010189999011345208,
+    "path_planning_s": 0.03512109999428503,
+    "total_s": 0.45846749999327585
   }
 }

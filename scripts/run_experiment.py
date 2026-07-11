@@ -20,7 +20,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path, default=Path("experiment.json"))
     parser.add_argument("--bias", type=float, default=0.5)
     parser.add_argument("--profile", choices=[item.value for item in ClusteringProfile], default=ClusteringProfile.OFFICIAL_MINIBATCH.value)
-    parser.add_argument("--path-profile", choices=[item.value for item in PathPlanningProfile], default=PathPlanningProfile.PAPER_NN.value)
+    parser.add_argument("--path-profile", choices=[item.value for item in PathPlanningProfile], default=PathPlanningProfile.APPROX_METRIC_TSP.value)
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
     report = run_experiment(args.map_file, config=ScoppConfig.from_cli(args.profile, args.seed, args.bias, args.path_profile))

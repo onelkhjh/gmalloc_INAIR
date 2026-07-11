@@ -2,7 +2,7 @@
 
 ## 1. 목적과 범위
 
-이 문서는 맵 계층의 출력을 이후 SCoPP 단계인 Lloyd 계열 clustering, conflict-cell greedy auction, KD-tree nearest-neighbor coverage route에 전달하는 계약을 정의한다. 현재 단계에서는 구현 코드를 변경하지 않는다.
+이 문서는 맵 계층의 출력을 clustering, conflict-cell greedy auction 및 coverage route에 전달하는 계약을 정의한다. 현재 운영 경로는 `approx_metric_tsp`이며 KD-tree nearest-neighbor는 SCoPP 기준선으로 보존한다.
 
 맵 계층은 geometry와 결정적 pseudo-discretization을 소유하고, 알고리즘 계층은 그 결과를 읽기만 한다. 알고리즘 계층이 polygon을 다시 격자화하거나 cell ID를 재발급해서는 안 된다.
 
@@ -104,7 +104,7 @@ auction 결과는 각 cell에 정확히 하나의 robot index를 부여하는 `o
 
 auction 완료 후 각 cell은 정확히 하나의 owner를 가져야 하며, candidate가 없는 conflict cell이나 범위 밖 owner는 실패로 처리한다.
 
-## 5. KD-tree nearest-neighbor route 연결
+## 5. KD-tree nearest-neighbor route 연결 (SCoPP 기준선)
 
 ```python
 @dataclass(frozen=True, slots=True)
@@ -124,6 +124,8 @@ class CoverageRoute:
 
 KD-tree에는 해당 robot 소유 cell의 중심만 넣는다. 첫 query 기준점은 robot 시작 위치이고, 방문한 점을 제거하거나 비활성화한 뒤 직전 방문 중심에서 반복한다. 결과의 waypoint는 `ordered_cell_indices`로부터 재구성 가능해야 하며 각 소유 cell을 정확히 한 번 포함해야 한다.
 
+현재 운영 기본 경로계획은 `approx_metric_tsp`이다. valid-cell 4-neighbor 최단거리의 metric closure 위에서 deterministic cheapest insertion과 2-opt를 적용한다. 이 절의 nearest-neighbor 방식은 `paper_nn` 프로필로 보존하여 SCoPP/public-code 기준선 비교에만 사용한다. `legacy_exact_tsp`는 소규모 회귀 검증용이며 운영 KPI에 포함하지 않는다.
+
 동일 거리 후보는 전역 cell index 또는 cell ID 순서로 결정한다. robot이 소유한 cell이 없으면 빈 route를 정상 결과로 반환할지 실패시킬지 정책을 고정해야 한다. 서로 분리된 effective-area component 사이를 잇는 직선이 no-fly zone/AOI 밖을 통과할 수 있으므로 이 route는 우선 **방문 순서**이지 충돌 없는 실제 비행 궤적이라고 간주하면 안 된다.
 
 ## 6. 모듈 경계 권고
@@ -136,7 +138,7 @@ src/scopp/
     clustering.py       # Lloyd 계열 반복
     conflicts.py        # sample label -> cell partition
     auction.py          # conflict cell 소유권 결정
-    routing.py          # KD-tree nearest-neighbor 방문 순서
+    path_planning.py    # Approx Metric-TSP 운영 경로 + paper_nn 기준선
     models.py           # 위 알고리즘 입력/결과 불변 타입
 ```
 
@@ -154,8 +156,8 @@ src/scopp/
 6. conflict cell 정의가 “한 cell perimeter에 복수 label”과 정확히 일치하는지.
 7. greedy auction의 bid 식, `d_B(r) = d_0(r) * B` 적용 위치, `B = 0.5`의 의미와 갱신 순서.
 8. auction candidate가 perimeter label에 나타난 robot으로 제한되는지 모든 robot인지.
-9. nearest-neighbor 경로가 cell 중심만 방문하는지, 시작점을 결과 waypoint에 포함하는지, 동일 거리 동점 규칙.
-10. KD-tree를 매 단계 재구축하는지 lazy deletion을 쓰는지. 이는 결과보다 성능 문제지만 재현 시간에 영향을 준다.
+9. `paper_nn` 기준선이 cell 중심만 방문하는지, 시작점을 결과 waypoint에 포함하는지, 동일 거리 동점 규칙.
+10. `paper_nn`의 KD-tree를 매 단계 재구축하는지 lazy deletion을 쓰는지. 이는 기준선 결과보다 성능 문제지만 재현 시간에 영향을 준다.
 11. 불연속 AOI/no-fly zone 사이 transit의 안전 경로를 논문 알고리즘이 보장하는지.
 12. `18 x 14 degree` 카메라에서 정사각 cell 폭과 perimeter를 정할 때 어느 FoV 성분을 쓰는지.
 

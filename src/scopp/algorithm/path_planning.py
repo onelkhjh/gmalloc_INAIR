@@ -108,7 +108,7 @@ class NoAdjacentPathError(ValueError):
 
 
 class MetricTspTooLargeError(ValueError):
-    """Raised when exact metric-closure TSP would be impractically large."""
+    """Raised when the legacy exact TSP solver would be impractically large."""
 
 
 def _adjacent_path(start_id: str, goal_id: str, cells_by_id, ids_by_key) -> tuple[str, ...]:
@@ -184,7 +184,7 @@ def _held_karp_cycle_order(distance: tuple[tuple[float, ...], ...], *, max_targe
         return ()
     if target_count > max_targets:
         raise MetricTspTooLargeError(
-            f"metric_tsp exact solver supports at most {max_targets} targets, got {target_count}"
+            f"legacy_exact_tsp supports at most {max_targets} targets, got {target_count}"
         )
     states: dict[tuple[int, int], tuple[float, int]] = {}
     for target in range(1, len(distance)):
@@ -270,13 +270,6 @@ def _insertion_two_opt_cycle_order(distance: tuple[tuple[float, ...], ...]) -> t
     return tuple(order)
 
 
-def _metric_tsp_order(distance: tuple[tuple[float, ...], ...]) -> tuple[int, ...]:
-    try:
-        return _held_karp_cycle_order(distance)
-    except MetricTspTooLargeError:
-        return _insertion_two_opt_cycle_order(distance)
-
-
 def _plan_paper_nn_paths(mapped: DiscretizedMap, allocation: AllocationResult) -> PathPlan:
     """Order each node's assigned cell centres using KD-tree nearest neighbor."""
     cell_by_id = {cell.id: cell for cell in mapped.cells}
@@ -312,13 +305,17 @@ def _plan_paper_nn_paths(mapped: DiscretizedMap, allocation: AllocationResult) -
     return PathPlan(tuple(paths))
 
 
-def _plan_metric_tsp_paths(mapped: DiscretizedMap, allocation: AllocationResult) -> PathPlan:
+def _plan_approx_metric_tsp_paths(
+    mapped: DiscretizedMap,
+    allocation: AllocationResult,
+    *,
+    legacy_exact: bool = False,
+) -> PathPlan:
     """Use metric-closure TSP over the valid-cell graph for each node route.
 
-    Assignments with at most 20 targets use exact Held-Karp DP. Larger
-    assignments use deterministic insertion plus 2-opt on the same metric
-    closure so the UI and experiments remain tractable without an external
-    solver.
+    The active planner always uses deterministic insertion plus 2-opt. The
+    exponential Held-Karp solver remains available only through the explicit
+    legacy profile for small-instance regression and optimality-gap checks.
     """
     cell_by_id = {cell.id: cell for cell in mapped.cells}
     id_by_key = {(cell.row, cell.col): cell.id for cell in mapped.cells}
@@ -337,7 +334,11 @@ def _plan_metric_tsp_paths(mapped: DiscretizedMap, allocation: AllocationResult)
         required = tuple(sorted(allocated.cell_ids, key=lambda cell_id: stable_index[cell_id]))
         metric_nodes = (depot_id,) + required
         distance_matrix = _metric_distance_matrix(metric_nodes, cell_by_id, id_by_key, mapped.cell_width_m)
-        order_indices = _metric_tsp_order(distance_matrix)
+        order_indices = (
+            _held_karp_cycle_order(distance_matrix)
+            if legacy_exact
+            else _insertion_two_opt_cycle_order(distance_matrix)
+        )
         ordered_ids = tuple(metric_nodes[index] for index in order_indices)
         waypoints = tuple(cell_by_id[cell_id].center for cell_id in ordered_ids)
         motion_ids: list[str] = [depot_id]
@@ -360,7 +361,7 @@ def plan_coverage_paths(
     mapped: DiscretizedMap,
     allocation: AllocationResult,
     *,
-    profile: PathPlanningProfile | str = PathPlanningProfile.PAPER_NN,
+    profile: PathPlanningProfile | str = PathPlanningProfile.APPROX_METRIC_TSP,
 ) -> PathPlan:
     """Plan per-node coverage routes with the selected path planning profile."""
     if len(allocation.nodes) != len(mapped.source.node_starts):
@@ -368,8 +369,10 @@ def plan_coverage_paths(
     selected = PathPlanningProfile(profile)
     if selected is PathPlanningProfile.PAPER_NN:
         return _plan_paper_nn_paths(mapped, allocation)
-    if selected is PathPlanningProfile.METRIC_TSP:
-        return _plan_metric_tsp_paths(mapped, allocation)
+    if selected is PathPlanningProfile.APPROX_METRIC_TSP:
+        return _plan_approx_metric_tsp_paths(mapped, allocation)
+    if selected is PathPlanningProfile.LEGACY_EXACT_TSP:
+        return _plan_approx_metric_tsp_paths(mapped, allocation, legacy_exact=True)
     raise ValueError(f"unsupported path planning profile {profile!r}")
 
 

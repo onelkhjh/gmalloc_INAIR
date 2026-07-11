@@ -110,7 +110,7 @@ function render() {
 
   const delta = (nnMetrics.total - metricMetrics.total) / nnMetrics.total * 100;
   setText('#delta', `${delta >= 0 ? '−' : '+'}${Math.abs(delta).toFixed(2)}%`);
-  setText('#finding', `Metric-TSP is ${Math.abs(delta).toFixed(2)}% ${delta >= 0 ? 'shorter' : 'longer'} than NN for ${node.id}.`);
+  setText('#finding', `Approx Metric-TSP is ${Math.abs(delta).toFixed(2)}% ${delta >= 0 ? 'shorter' : 'longer'} than NN for ${node.id}.`);
   setText('#detail', 'Comparison uses the same grid-adjacent executable model with no-fly blocking.');
   setText('#orientationNote', 'Executable comparison only.');
 }

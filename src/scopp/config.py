@@ -19,14 +19,17 @@ class ClusteringProfile(str, Enum):
 
 
 class PathPlanningProfile(str, Enum):
+    """Active indoor planner plus retained SCoPP and exact references."""
+
     PAPER_NN = "paper_nn"
-    METRIC_TSP = "metric_tsp"
+    APPROX_METRIC_TSP = "approx_metric_tsp"
+    LEGACY_EXACT_TSP = "legacy_exact_tsp"
 
 
 @dataclass(frozen=True, slots=True)
 class ScoppConfig:
     clustering_profile: ClusteringProfile = ClusteringProfile.OFFICIAL_MINIBATCH
-    path_planning_profile: PathPlanningProfile = PathPlanningProfile.PAPER_NN
+    path_planning_profile: PathPlanningProfile = PathPlanningProfile.APPROX_METRIC_TSP
     random_seed: int = 0
     auction_bias: float = 0.5
     clustering_tolerance_m: float | None = None
@@ -43,5 +46,5 @@ class ScoppConfig:
             raise ValueError("clustering_max_iterations must be greater than zero")
 
     @classmethod
-    def from_cli(cls, profile: str, seed: int, bias: float = 0.5, path_profile: str = PathPlanningProfile.PAPER_NN.value) -> "ScoppConfig":
+    def from_cli(cls, profile: str, seed: int, bias: float = 0.5, path_profile: str = PathPlanningProfile.APPROX_METRIC_TSP.value) -> "ScoppConfig":
         return cls(ClusteringProfile(profile), PathPlanningProfile(path_profile), seed, bias)

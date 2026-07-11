@@ -38,7 +38,7 @@ def main() -> None:
     parser.add_argument("map_file", type=Path)
     parser.add_argument("--output", type=Path, default=Path("artifacts/path_ui.html"))
     parser.add_argument("--profile", choices=[item.value for item in ClusteringProfile], default=ClusteringProfile.OFFICIAL_MINIBATCH.value)
-    parser.add_argument("--path-profile", choices=[item.value for item in PathPlanningProfile], default=PathPlanningProfile.PAPER_NN.value)
+    parser.add_argument("--path-profile", choices=[item.value for item in PathPlanningProfile], default=PathPlanningProfile.APPROX_METRIC_TSP.value)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--bias", type=float, default=0.5)
     args = parser.parse_args()

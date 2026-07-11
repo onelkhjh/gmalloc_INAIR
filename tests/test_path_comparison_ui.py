@@ -22,6 +22,6 @@ def test_path_comparison_ui_builds_standalone_html(tmp_path: Path) -> None:
         check=True,
     )
     html = output.read_text(encoding="utf-8")
-    assert "Metric-TSP vs public-code NN" in html
+    assert "Approx Metric-TSP vs public-code NN" in html
     assert 'data-testid="node-select"' in html
     assert "__DATA__" not in html

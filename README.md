@@ -1,128 +1,62 @@
 # Multi-robot Indoor Coverage Path Planning
 
-## Clustering baseline
+이 저장소는 SCoPP 논문 *Scalable Coverage Path Planning of Multi-Robot Teams for Monitoring Non-Convex Areas*와 저자 공식 코드를 기준선으로 유지하면서, 동일한 맵·할당·제약에서 실내 다중 로봇 커버리지 KPI를 개선하는 프로젝트다.
 
-- `official_minibatch` is the default and the official SCoPP clustering
-  baseline. Official comparison and KPI artifacts must use this profile.
-- `deterministic_lloyd` is a non-default legacy/test profile retained for
-  historical reproduction and deterministic unit tests. It must not be used
-  for official comparison or KPI artifacts.
-- Comparisons must keep the map, clustering/allocation, and constraints fixed.
-  See [the official parity audit](docs/official_parity_audit.md) for details.
+## 기본 프로필
 
-## 클러스터링 기준선
+- Clustering: `official_minibatch` — SCoPP 공식 기준선
+- Path planning: `approx_metric_tsp` — 현재 운영 및 KPI 개선 기본값
+- Baseline path: `paper_nn` — SCoPP/public-code 비교용 기준선
+- Legacy exact path: `legacy_exact_tsp` — 20개 이하 소규모 문제의 회귀 검증 및 optimality-gap 측정용
 
-- `official_minibatch`를 기본값이자 공식 SCoPP 클러스터링 기준선으로 사용한다.
-  공식 비교 및 KPI 산출물은 반드시 이 프로파일을 사용한다.
-- `deterministic_lloyd`는 과거 결과 재현과 결정론적 단위 테스트를 위한 비기본
-  레거시/테스트 프로파일로만 유지한다. 공식 비교 및 KPI 산출물에는 사용하지 않는다.
-- 비교할 때는 맵, 클러스터링/할당, 제약 조건을 동일하게 고정한다. 자세한 내용은
-  [공식 코드 정합성 문서](docs/official_parity_audit.ko.md)를 참고한다.
+`approx_metric_tsp`는 valid-cell 4-neighbor 그래프의 최단거리로 metric closure를 만들고, deterministic cheapest insertion과 2-opt로 방문 순서를 계산한다. 모든 로봇에 같은 근사해법을 적용하며 셀 개수에 따라 exact 해법으로 자동 전환하지 않는다.
 
-## 한국어
+## 비교 원칙
 
-이 저장소는 Leighton Collins et al.의 논문 *Scalable Coverage Path Planning of Multi-Robot Teams for Monitoring Non-Convex Areas* (arXiv:2103.14709)과 저자 공식 코드를 기준선으로 두고, 같은 조건에서 더 나은 KPI를 만드는 방향으로 진행한다.
+- 같은 맵, clustering/allocation, seed, auction bias 및 비행 제약을 사용한다.
+- SCoPP clustering, conflict auction, `paper_nn` 경로는 기준선으로 보존한다.
+- 개선 경로와 기준선 결과를 별도 프로필과 산출물로 관리한다.
+- 셀 중심 direct distance와 실제 제약을 반영한 executable distance를 분리해 보고한다.
+- 최종 KPI는 valid-cell 이동 및 no-fly 차단을 적용한 executable distance를 중심으로 평가한다.
 
-기준선으로 유지하는 범위는 clustering, auction, coverage path planning이다. 이 세 단계는 논문 재현의 기준으로 남겨두되, 실제 작업 초점은 실내 비행에 더 적합한 경로와 지표를 만드는 쪽에 둔다.
+## 현재 KPI
 
-이 프로젝트는 Multi-robot Indoor Coverage Path Planning으로 정리한다. 따라서 direct-distance와 executable-distance를 섞지 않고, 동일한 맵과 동일한 할당, 동일한 제약 조건에서만 비교한다.
+동일한 `official_minibatch`, `seed=0`, `auction_bias=0.5` 조건에서 `approx_metric_tsp`를 public-code NN과 비교한 결과:
 
-## 핵심 방향
+| KPI | Approx Metric-TSP | Public-code NN | 개선 |
+|---|---:|---:|---:|
+| Executable makespan | 43.266 m | 50.656 m | 14.59% |
+| Executable total distance | 147.184 m | 167.506 m | 12.13% |
 
-- baseline reference: SCoPP 논문 + 공식 코드
-- comparison focus: 같은 상태에서의 KPI 비교
-- optimization focus: 실내 비행에 더 적합한 경로와 지표
-- reporting discipline: direct-distance와 executable-distance를 섞지 않음
-- reference retention: clustering, auction, coverage path planning은 기준선으로 유지
+상세 결과는 [executable KPI report](artifacts/executable_kpi_result.md)에 있다.
 
-## 현재 보관 중인 핵심 결과물
+## 핵심 산출물
 
 - `artifacts/path_planner_exec_only_v1.json`
 - `artifacts/path_planner_exec_only_v1.png`
 - `artifacts/executable_kpi_result.md`
-- `artifacts/indoor_lab.png`
-- `artifacts/indoor_lab_plan.png`
+- `artifacts/path_ui.html`
+- `artifacts/path_comparison_ui.html`
 - `artifacts/indoor_lab_metrics.json`
-- `artifacts/paper_like.png`
 
-## 생성 방법
-
-UI는 Python 스크립트가 생성하고, 원본 템플릿은 `src/scopp/ui/`에 둔다.
+## 실행
 
 ```powershell
 python -m pip install -e ".[test]"
 python -m pytest
+
+# 기본값: official_minibatch + approx_metric_tsp
+python scripts/plan_map.py examples/maps/indoor_lab.yaml
+python scripts/run_experiment.py examples/maps/indoor_lab.yaml --output artifacts/indoor_lab_metrics.json
 python scripts/build_path_ui.py examples/maps/indoor_lab.yaml --output artifacts/path_ui.html
-python scripts/build_progress_ui.py --output artifacts/progress_ui.html
+
+# 동일 할당에서 개선 경로와 SCoPP NN 기준선 비교
 python scripts/build_path_comparison_ui.py examples/maps/indoor_lab.yaml --output artifacts/path_comparison_ui.html --seed 0 --bias 0.5
 python scripts/compare_path_planners.py examples/maps/indoor_lab.yaml --seed 0 --bias 0.5 --output artifacts/path_planner_exec_only_v1.json --plot artifacts/path_planner_exec_only_v1.png
 ```
 
-## 실행 기준 비교 결과
+기준선 재현이 필요하면 명시적으로 `--path-profile paper_nn`을 사용한다. Exact 검증은 `--path-profile legacy_exact_tsp`로 실행하며 로봇별 target이 20개를 넘으면 실패하는 것이 정상이다.
 
-핵심 비교 결과는 `artifacts/path_planner_exec_only_v1.png` 이다. 이 결과는 동일한 `grid-adjacent executable` 모델과 no-fly 차단 조건에서 Metric-TSP와 public-code NN을 비교한다.
+## English summary
 
-요약 문서는 `artifacts/executable_kpi_result.md` 에 있다.
-
-## 서브 에이전트
-
-서브 에이전트 역할과 사용 규칙은 [docs/subagents.md](docs/subagents.md) 에 정리되어 있다.
-
-## 참고
-
-- `path_ui.html`, `progress_ui.html`, `path_comparison_ui.html` 는 Python 스크립트가 생성하는 UI 템플릿이다.
-- 최종 KPI 보고는 direct-distance 숫자를 사용하지 않는다.
-
----
-
-## English
-
-This repository uses the SCoPP paper *Scalable Coverage Path Planning of Multi-Robot Teams for Monitoring Non-Convex Areas* (arXiv:2103.14709) and the official author code as the baseline reference, while targeting better KPI under the same conditions and optimizing for indoor flight.
-
-The baseline scope stays focused on clustering, auction, and coverage path planning. Those stages remain the reference behavior for reproduction, but the main project emphasis is on routes and metrics that are more suitable for indoor flight.
-
-The project is framed as Multi-robot Indoor Coverage Path Planning. Direct-distance and executable-distance are never mixed; comparisons are always made under the same map, the same allocation, and the same constraints.
-
-## Core direction
-
-- baseline reference: SCoPP paper + official code
-- comparison focus: KPI under the same state
-- optimization focus: paths and metrics better suited for multi-robot indoor flight
-- reporting discipline: do not mix direct-distance and executable-distance
-- reference retention: clustering, auction, and coverage path planning stay as baseline behavior
-
-## Current checked-in artifacts
-
-- `artifacts/path_planner_exec_only_v1.json`
-- `artifacts/path_planner_exec_only_v1.png`
-- `artifacts/executable_kpi_result.md`
-- `artifacts/indoor_lab.png`
-- `artifacts/indoor_lab_plan.png`
-- `artifacts/indoor_lab_metrics.json`
-- `artifacts/paper_like.png`
-
-## Run
-
-```powershell
-python -m pip install -e ".[test]"
-python -m pytest
-python scripts/build_path_ui.py examples/maps/indoor_lab.yaml --output artifacts/path_ui.html
-python scripts/build_progress_ui.py --output artifacts/progress_ui.html
-python scripts/build_path_comparison_ui.py examples/maps/indoor_lab.yaml --output artifacts/path_comparison_ui.html --seed 0 --bias 0.5
-python scripts/compare_path_planners.py examples/maps/indoor_lab.yaml --seed 0 --bias 0.5 --output artifacts/path_planner_exec_only_v1.json --plot artifacts/path_planner_exec_only_v1.png
-```
-
-## Exec-only comparison result
-
-The main comparison artifact is `artifacts/path_planner_exec_only_v1.png`. It compares Metric-TSP and public-code NN under the same `grid-adjacent executable` model with no-fly blocking.
-
-The summary report is `artifacts/executable_kpi_result.md`.
-
-## Sub-agents
-
-The sub-agent roles and usage rules are documented in [docs/subagents.md](docs/subagents.md).
-
-## Notes
-
-- `path_ui.html`, `progress_ui.html`, and `path_comparison_ui.html` are Python-generated UI templates.
-- Final KPI reporting does not use direct-distance numbers.
+The SCoPP paper and official code remain the reproduction baseline. The active indoor route planner is now `approx_metric_tsp`, using metric closure over the valid-cell graph followed by deterministic cheapest insertion and 2-opt. `paper_nn` remains available only as the SCoPP/public-code path baseline, while `legacy_exact_tsp` is retained for small-instance regression and optimality-gap checks. Direct and executable distances are reported separately under fixed map, allocation, and constraints.
